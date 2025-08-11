@@ -57,6 +57,15 @@ def gen_remark(row):
     else:
         return row.get("Remark", "")
 
+def extract_main_comp(comp):
+    # 取第一个/前的编号，再去掉下划线及后缀
+    if pd.isna(comp):
+        return ""
+    comp = str(comp).replace(' ', '').upper()
+    main = comp.split('/')[0].split(',')[0]
+    main = main.split('_')[0].split('-')[0]
+    return main
+
 def main():
     st.set_page_config(page_title="Report Auto-generated Tool", page_icon="📊", layout="wide")
     st.markdown(
@@ -141,23 +150,47 @@ def main():
                 
                 # 生成Remark列
                 df_with_desc["Remark"] = df_with_desc.apply(gen_remark, axis=1)
+
+                # 去重逻辑：只保留主编号唯一且字符串最短的那一条
+                if not df_with_desc.empty:
+                    df_with_desc["main_comp"] = df_with_desc["Components"].apply(extract_main_comp)
+                    df_with_desc["comp_len"] = df_with_desc["Components"].apply(lambda x: len(str(x)))
+                    idx = (
+                        df_with_desc
+                        .sort_values(["main_comp", "comp_len"], ascending=[True, True])
+                        .groupby("main_comp", as_index=False)
+                        .head(1)
+                        .index
+                    )
+                    # 保留唯一主编号的行
+                    df_unique = df_with_desc.loc[idx].copy()
+                    # 其余为重复项
+                    df_dup = df_with_desc.drop(idx)
+                    # 清理辅助列
+                    df_unique = df_unique.drop(columns=["main_comp", "comp_len"])
+                    df_dup = df_dup.drop(columns=["main_comp", "comp_len"])
+                else:
+                    df_unique = df_with_desc
+                    df_dup = pd.DataFrame()
                
-                # 只显示有Description的行在PartsCoverage
-                show_cols = list(df_with_desc.columns)
+                # 保证No.列自上而下递增
+                if "No." in df_unique.columns:
+                    df_unique["No."] = range(1, len(df_unique) + 1)
+
+                # 只显示有Description且唯一的行在PartsCoverage
+                show_cols = list(df_unique.columns)
                 if "Description" not in show_cols:
                     show_cols.append("Description")
                 if "Remark" not in show_cols:
                     show_cols.append("Remark")
                 edited_dat = st.data_editor(
-                    df_with_desc[show_cols],
+                    df_unique[show_cols],
                     num_rows="dynamic",
                     key="dat_editor",
                     use_container_width=True
                 )
-                
-
-                # 统计Testable字段（只统计一次）
-                testable_counts = edited_dat["Testable"].value_counts()
+                # 统计Testable字段（只统计唯一主编号的行，不含重复项）
+                testable_counts = df_unique["Testable"].value_counts()
                 y_count = testable_counts.get("Y", 0)
                 n_count = testable_counts.get("N", 0)
                 l_count = testable_counts.get("L", 0)
@@ -168,6 +201,18 @@ def main():
                     f"**Testable统计：** Y = {y_count}，N = {n_count}，L = {l_count}  \n"
                     f"**覆盖率 (Y+L)/(Y+L+N)：** {coverage:.2%}"
                 )
+                # 显示重复项
+                if not df_dup.empty:
+                    st.markdown("**Components重复项（仅显示不导出）**")
+                    def highlight_dup(s):
+                        return ['background-color: #d9ead3; text-align: center'] * len(s)
+                    st.dataframe(
+                        df_dup.style.apply(highlight_dup, axis=1).set_properties(**{'text-align': 'center'}),
+                        use_container_width=True,
+                        height=200
+                    )
+
+                
             else:
                 edited_dat = pd.DataFrame()
                 df_no_desc = pd.DataFrame()
@@ -205,7 +250,7 @@ def main():
             csv_df,
             header_data,
             {
-                "data": edited_dat,  # 只导出有Description的部分
+                "data": edited_dat,  # 只导出有Description且唯一的部分
                 "nc_data": dat_data["nc_data"] if dat_data else pd.DataFrame(),
                 "board_name": dat_data.get("board_name", "") if dat_data else "",
                 "test_time": dat_data.get("test_time", "") if dat_data else "",

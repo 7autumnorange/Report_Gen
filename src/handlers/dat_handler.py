@@ -49,7 +49,7 @@ class DatHandler:
                         skip = tokens[idx_token]
                         break
                 # /NC 特殊处理
-                if "/NC" in parts_n:
+                if "/NC" in parts_n.upper():
                     nc_rows.append({
                         "Step": step,
                         "No.": None,
@@ -62,28 +62,27 @@ class DatHandler:
 
                 # 新增特殊规则
                 testable = ""
+                parts_n_upper = parts_n.upper()
+                group_y = ["/R", "/IC", "/U", "/C", "/Q"]
+                group_n = ["/SG", "/L", "/NP", "/RM", "/VM", "/PCB"]
+                group_l = ["/TVS", "/PCB"]
+
                 if skip == "0":
-                    if "/" not in parts_n:
+                    if any(x in parts_n_upper for x in group_y):
                         testable = "Y"
-                    else:
-                        y_keys = ["/R", "/IC", "/U", "/C", "/PCB", "/Q"]
-                        n_keys = ["/SG", "/L", "/NP", "/RM", "/VM"]
-                        if any(k in parts_n for k in y_keys):
-                            testable = "Y"
-                        elif any(k in parts_n for k in n_keys):
-                            testable = "N"
-                elif skip == "1":
-                    if "/NP" in parts_n:
+                    elif any(x in parts_n_upper for x in group_n):
                         testable = "N"
-                    elif "/" in parts_n:
+                    elif any(x in parts_n_upper for x in group_l):
                         testable = "L"
-                    else:
-                        y_keys = ["/R", "/IC", "/U", "/C", "/PCB", "/Q"]
-                        n_keys = ["/SG", "/L", "/NP", "/RM", "/VM"]
-                        if any(k in parts_n for k in y_keys):
-                            testable = "L"
-                        elif any(k in parts_n for k in n_keys):
-                            testable = "N"
+                elif skip == "1":
+                    if any(x in parts_n_upper for x in group_y):
+                        testable = "L"
+                    elif any(x in parts_n_upper for x in group_n):
+                        testable = "N"
+                    elif any(x in parts_n_upper for x in group_l):
+                        testable = "L"
+                else:
+                    testable = ""
 
                 test_rows.append({
                     "Step": step,

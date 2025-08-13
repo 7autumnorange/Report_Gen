@@ -114,27 +114,11 @@ class DatHandler:
                     else:
                         testable = ""
                 else:
-                    # 没有/，用前缀判断
-                    prefix_match = re.match(r"^([A-Z]+)\d+", parts_n_upper)
-                    prefix = prefix_match.group(1) if prefix_match else ""
+                    # 没有/，直接判断
                     if skip == "0":
-                        if prefix and match_any(prefix, group_y):
-                            testable = "Y"
-                        elif prefix and match_any(prefix, group_n):
-                            testable = "N"
-                        elif prefix and match_any(prefix, group_l):
-                            testable = "L"
-                        else:
-                            testable = "Y"
+                        testable = "Y"
                     elif skip == "1":
-                        if prefix and match_any(prefix, group_n):
-                            testable = "N"
-                        elif prefix and match_any(prefix, group_y):
-                            testable = "L"
-                        elif prefix and match_any(prefix, group_l):
-                            testable = "L"
-                        else:
-                            testable = ""
+                        testable = ""
                     else:
                         testable = ""
 

@@ -63,23 +63,31 @@ class DatHandler:
                 # 新增特殊规则
                 testable = ""
                 parts_n_upper = parts_n.upper()
-                group_y = ["/R", "/IC", "/U", "/C", "/Q"]
-                group_n = ["/SG", "/L", "/NP", "/RM", "/VM", "/PCB"]
-                group_l = ["/TVS", "/PCB"]
+                group_y = ["R", "IC", "U", "C", "Q"]
+                group_n = ["SG", "L", "NP", "RM", "VM", "PCB"]
+                group_l = ["TVS", "PCB"]
+
+                def match_any(comp, group):
+                    for g in group:
+                        if re.match(rf"^{g}\d+", comp):  # 如C211
+                            return True
+                        if f"/{g}" in comp:
+                            return True
+                    return False
 
                 if skip == "0":
-                    if any(x in parts_n_upper for x in group_y):
+                    if match_any(parts_n_upper, group_y):
                         testable = "Y"
-                    elif any(x in parts_n_upper for x in group_n):
+                    elif match_any(parts_n_upper, group_n):
                         testable = "N"
-                    elif any(x in parts_n_upper for x in group_l):
+                    elif match_any(parts_n_upper, group_l):
                         testable = "L"
                 elif skip == "1":
-                    if any(x in parts_n_upper for x in group_y):
+                    if match_any(parts_n_upper, group_y):
                         testable = "L"
-                    elif any(x in parts_n_upper for x in group_n):
+                    elif match_any(parts_n_upper, group_n):
                         testable = "N"
-                    elif any(x in parts_n_upper for x in group_l):
+                    elif match_any(parts_n_upper, group_l):
                         testable = "L"
                 else:
                     testable = ""

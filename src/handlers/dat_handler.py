@@ -82,6 +82,8 @@ class DatHandler:
                         testable = "N"
                     elif match_any(parts_n_upper, group_l):
                         testable = "L"
+                    elif "/" not in parts_n_upper:
+                        testable = "Y"
                 elif skip == "1":
                     if match_any(parts_n_upper, group_y):
                         testable = "L"

@@ -151,13 +151,18 @@ def main():
                 # 生成Remark列
                 df_with_desc["Remark"] = df_with_desc.apply(gen_remark, axis=1)
 
-                # 去重逻辑：只保留主编号唯一且字符串最短的那一条
+                # 去重逻辑：同主编号优先保留没有/的，如果都有/，优先保留没有-的，都没有-的选字符串长度最短的
                 if not df_with_desc.empty:
                     df_with_desc["main_comp"] = df_with_desc["Components"].apply(extract_main_comp)
+                    df_with_desc["has_slash"] = df_with_desc["Components"].apply(lambda x: "/" in str(x))
+                    df_with_desc["has_dash"] = df_with_desc["Components"].apply(lambda x: "-" in str(x))
                     df_with_desc["comp_len"] = df_with_desc["Components"].apply(lambda x: len(str(x)))
                     idx = (
                         df_with_desc
-                        .sort_values(["main_comp", "comp_len"], ascending=[True, True])
+                        .sort_values(
+                            ["main_comp", "has_slash", "has_dash", "comp_len"],
+                            ascending=[True, True, True, True]
+                        )
                         .groupby("main_comp", as_index=False)
                         .head(1)
                         .index
@@ -167,8 +172,8 @@ def main():
                     # 其余为重复项
                     df_dup = df_with_desc.drop(idx)
                     # 清理辅助列
-                    df_unique = df_unique.drop(columns=["main_comp", "comp_len"])
-                    df_dup = df_dup.drop(columns=["main_comp", "comp_len"])
+                    df_unique = df_unique.drop(columns=["main_comp", "has_slash", "has_dash", "comp_len"])
+                    df_dup = df_dup.drop(columns=["main_comp", "has_slash", "has_dash", "comp_len"])
                 else:
                     df_unique = df_with_desc
                     df_dup = pd.DataFrame()

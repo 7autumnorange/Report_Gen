@@ -69,30 +69,74 @@ class DatHandler:
 
                 def match_any(comp, group):
                     for g in group:
-                        if re.match(rf"^{g}\d+", comp):  # 如C211
-                            return True
-                        if f"/{g}" in comp:
+                        if comp == g:
                             return True
                     return False
 
-                if skip == "0":
-                    if match_any(parts_n_upper, group_y):
-                        testable = "Y"
-                    elif match_any(parts_n_upper, group_n):
-                        testable = "N"
-                    elif match_any(parts_n_upper, group_l):
-                        testable = "L"
-                    elif "/" not in parts_n_upper:
-                        testable = "Y"
-                elif skip == "1":
-                    if match_any(parts_n_upper, group_y):
-                        testable = "L"
-                    elif match_any(parts_n_upper, group_n):
-                        testable = "N"
-                    elif match_any(parts_n_upper, group_l):
-                        testable = "L"
+                # 优先用/后缀判断
+                if "/" in parts_n_upper:
+                    suffix = parts_n_upper.split("/")[-1]
+                    prefix_match = re.match(r"^([A-Z]+)\d+", parts_n_upper)
+                    prefix = prefix_match.group(1) if prefix_match else ""
+                    if skip == "0":
+                        if match_any(suffix, group_n):
+                            testable = "N"
+                        elif match_any(suffix, group_y):
+                            testable = "Y"
+                        elif match_any(suffix, group_l):
+                            testable = "L"
+                        else:
+                            # 如果/后面没命中，再用前缀判断
+                            if prefix and match_any(prefix, group_y):
+                                testable = "Y"
+                            elif prefix and match_any(prefix, group_n):
+                                testable = "N"
+                            elif prefix and match_any(prefix, group_l):
+                                testable = "L"
+                            else:
+                                testable = ""
+                    elif skip == "1":
+                        if match_any(suffix, group_n):
+                            testable = "N"
+                        elif match_any(suffix, group_y):
+                            testable = "L"
+                        elif match_any(suffix, group_l):
+                            testable = "L"
+                        else:
+                            if prefix and match_any(prefix, group_n):
+                                testable = "N"
+                            elif prefix and match_any(prefix, group_y):
+                                testable = "L"
+                            elif prefix and match_any(prefix, group_l):
+                                testable = "L"
+                            else:
+                                testable = ""
+                    else:
+                        testable = ""
                 else:
-                    testable = ""
+                    # 没有/，用前缀判断
+                    prefix_match = re.match(r"^([A-Z]+)\d+", parts_n_upper)
+                    prefix = prefix_match.group(1) if prefix_match else ""
+                    if skip == "0":
+                        if prefix and match_any(prefix, group_y):
+                            testable = "Y"
+                        elif prefix and match_any(prefix, group_n):
+                            testable = "N"
+                        elif prefix and match_any(prefix, group_l):
+                            testable = "L"
+                        else:
+                            testable = "Y"
+                    elif skip == "1":
+                        if prefix and match_any(prefix, group_n):
+                            testable = "N"
+                        elif prefix and match_any(prefix, group_y):
+                            testable = "L"
+                        elif prefix and match_any(prefix, group_l):
+                            testable = "L"
+                        else:
+                            testable = ""
+                    else:
+                        testable = ""
 
                 test_rows.append({
                     "Step": step,

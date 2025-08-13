@@ -63,9 +63,9 @@ class DatHandler:
                 # 新增特殊规则
                 testable = ""
                 parts_n_upper = parts_n.upper()
-                group_y = ["/R", "/IC", "/U", "/C", "/Q", "/D"]
-                group_n = ["/SG", "/L", "/NP", "/RM", "/VM", "/PCB"]
-                group_l = ["/TVS", "/PCB"]
+                group_y = ["R", "IC", "U", "C", "Q"]
+                group_n = ["SG", "L", "NP", "RM", "VM", "PCB"]
+                group_l = ["TVS", "PCB"]
 
                 def match_any(comp, group):
                     for g in group:

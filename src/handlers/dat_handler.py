@@ -63,7 +63,7 @@ class DatHandler:
                 # 新增特殊规则
                 testable = ""
                 parts_n_upper = parts_n.upper()
-                group_y = ["R", "IC", "U", "C", "Q"]
+                group_y = ["R", "IC", "U", "C", "Q", "D"]
                 group_n = ["SG", "L", "NP", "RM", "VM", "PCB"]
                 group_l = ["TVS", "PCB"]
 

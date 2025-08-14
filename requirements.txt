@@ -3,3 +3,4 @@ pandas
 openpyxl
 xlrd
 streamlit-extras
+streamlit_analytics

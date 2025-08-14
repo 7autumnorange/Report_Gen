@@ -6,6 +6,21 @@ from handlers.csv_handler import CsvHandler
 from handlers.dcl_handler import DclHandler
 from utils.excel_utils import fill_template_excel
 
+# 必须是第一个 Streamlit 命令
+st.set_page_config(page_title="Report Auto-generated Tool", page_icon="📊", layout="wide")
+
+# 集成 Google Analytics 统计代码
+st.markdown("""
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-76RNQK1T5W"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-76RNQK1T5W');
+</script>
+""", unsafe_allow_html=True)
+
 def expand_reference(ref_str):
     refs = []
     for part in str(ref_str).replace(' ', '').split(','):
@@ -67,7 +82,6 @@ def extract_main_comp(comp):
     return main
 
 def main():
-    st.set_page_config(page_title="Report Auto-generated Tool", page_icon="📊", layout="wide")
     st.markdown(
         "<h1 style='text-align: center; color: #4F8BF9;'>📊 Report Auto-generated Tool</h1>",
         unsafe_allow_html=True

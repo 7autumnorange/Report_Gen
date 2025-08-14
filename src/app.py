@@ -9,18 +9,6 @@ from utils.excel_utils import fill_template_excel
 # 必须是第一个 Streamlit 命令
 st.set_page_config(page_title="Report Auto-generated Tool", page_icon="📊", layout="wide")
 
-# 集成 Google Analytics 统计代码
-st.markdown("""
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-76RNQK1T5W"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-76RNQK1T5W');
-</script>
-""", unsafe_allow_html=True)
-
 def expand_reference(ref_str):
     refs = []
     for part in str(ref_str).replace(' ', '').split(','):
@@ -165,17 +153,20 @@ def main():
                 # 生成Remark列
                 df_with_desc["Remark"] = df_with_desc.apply(gen_remark, axis=1)
 
-                # 去重逻辑：同主编号优先保留没有/的，如果都有/，优先保留没有-的，都没有-的选字符串长度最短的
+                # 去重逻辑：同主编号优先保留带/NP的，其次带/的，其次带_的，再其次没有-的，最后字符串长度最短的
                 if not df_with_desc.empty:
                     df_with_desc["main_comp"] = df_with_desc["Components"].apply(extract_main_comp)
+                    df_with_desc["testable_notna"] = df_with_desc["Testable"].apply(lambda x: pd.notna(x) and str(x).strip() != "")
+                    df_with_desc["has_np"] = df_with_desc["Components"].apply(lambda x: "/NP" in str(x).upper())
                     df_with_desc["has_slash"] = df_with_desc["Components"].apply(lambda x: "/" in str(x))
                     df_with_desc["has_dash"] = df_with_desc["Components"].apply(lambda x: "-" in str(x))
+                    df_with_desc["has_underscore"] = df_with_desc["Components"].apply(lambda x: "_" in str(x))
                     df_with_desc["comp_len"] = df_with_desc["Components"].apply(lambda x: len(str(x)))
                     idx = (
                         df_with_desc
                         .sort_values(
-                            ["main_comp", "has_slash", "has_dash", "comp_len"],
-                            ascending=[True, True, True, True]
+                            ["main_comp", "testable_notna", "has_np", "has_slash", "has_dash", "has_underscore", "comp_len"],
+                            ascending=[True, False, False, False, False, False, True]  # has_dash放在has_underscore前，且False优先
                         )
                         .groupby("main_comp", as_index=False)
                         .head(1)
@@ -186,8 +177,8 @@ def main():
                     # 其余为重复项
                     df_dup = df_with_desc.drop(idx)
                     # 清理辅助列
-                    df_unique = df_unique.drop(columns=["main_comp", "has_slash", "has_dash", "comp_len"])
-                    df_dup = df_dup.drop(columns=["main_comp", "has_slash", "has_dash", "comp_len"])
+                    df_unique = df_unique.drop(columns=["main_comp", "testable_notna", "has_np", "has_slash", "has_underscore", "has_dash", "comp_len"])
+                    df_dup = df_dup.drop(columns=["main_comp", "testable_notna", "has_np", "has_slash", "has_underscore", "has_dash", "comp_len"])
                 else:
                     df_unique = df_with_desc
                     df_dup = pd.DataFrame()
